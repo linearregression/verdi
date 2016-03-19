@@ -276,6 +276,6 @@ Section LeaderLogsPreserved.
       
   Instance llpi : leaderLogs_preserved_interface.
   split. eauto using leaderLogs_preserved_invariant.
-  Defined.
+  Qed.
   
 End LeaderLogsPreserved.

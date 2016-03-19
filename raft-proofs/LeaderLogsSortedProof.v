@@ -236,5 +236,5 @@ Section LeaderLogsSorted.
   Proof.
     split.
     eauto using leaderLogs_sorted_invariant.
-  Defined.
+  Qed.
 End LeaderLogsSorted.

@@ -156,5 +156,5 @@ Section LastAppliedCommitIndexMatching.
   - exact lastApplied_commitIndex_match_invariant.
   - exact commitIndex_lastApplied_match_invariant.
   - exact lastApplied_lastApplied_match_invariant.
-  Defined.
+  Qed.
 End LastAppliedCommitIndexMatching.

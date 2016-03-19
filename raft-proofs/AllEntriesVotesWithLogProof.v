@@ -372,5 +372,5 @@ Section AllEntriesVotesWithLog.
 
   Instance aevwli : allEntries_votesWithLog_interface.
   split. eauto using allEntries_votesWithLog_invariant.
-  Defined.
+  Qed.
 End AllEntriesVotesWithLog.

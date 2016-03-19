@@ -98,6 +98,6 @@ Section VotesWithLogTermSanity.
 
   Instance vwltsi : votesWithLog_term_sanity_interface.
     split. apply votesWithLog_term_sanity_invariant.
-  Defined.
+  Qed.
 
 End VotesWithLogTermSanity.

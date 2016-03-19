@@ -190,6 +190,6 @@ Section LeaderLogsLogProperties.
   Instance lpholli : log_properties_hold_on_leader_logs_interface.
   split.
   auto using log_properties_hold_on_leader_logs_invariant.
-  Defined.
+  Qed.
   
 End LeaderLogsLogProperties.

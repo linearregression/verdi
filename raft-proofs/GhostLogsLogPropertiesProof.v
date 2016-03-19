@@ -212,6 +212,6 @@ Section GhostLogsLogProperties.
   Instance lphogli : log_properties_hold_on_ghost_logs_interface.
   split.
   auto using log_properties_hold_on_ghost_logs_invariant.
-  Defined.
+  Qed.
   
 End GhostLogsLogProperties.

@@ -1902,6 +1902,6 @@ intuition.
   split; intros.
   - apply prefix_within_term_inductive_invariant. auto.
   - apply log_log_prefix_within_term_invariant. auto.
-  Defined.
+  Qed.
   
 End PrefixWithinTerm.

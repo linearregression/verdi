@@ -1119,5 +1119,5 @@ Ltac all f ls :=
 
   Instance aeli : allEntries_log_interface.
   split. eauto using allEntries_log_invariant.
-  Defined.
+  Qed.
 End AllEntriesLog.

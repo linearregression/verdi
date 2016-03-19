@@ -88,6 +88,6 @@ Section VotesVotesWithLogCorrespond.
   Instance vvci : votes_votesWithLog_correspond_interface.
   Proof.
     split. exact votes_votesWithLog_correspond_invariant.
-  Defined.
+  Qed.
 
 End VotesVotesWithLogCorrespond.
