@@ -1,7 +1,7 @@
 Require Import Verdi.
 Require Import HandlerMonad.
-
 Require Import UpdateLemmas.
+Require Import Cheerios.Types.
 Local Arguments update {_} {_} {_} _ _ _ _ : simpl never.
 
 Set Implicit Arguments.
@@ -66,9 +66,9 @@ Section Counter.
 
   Instance Counter_BaseParams : BaseParams :=
     {
-      data := Data;
-      input := Input;
-      output := Output
+      data := list bool;
+      input := list bool;
+      output := list bool
     }.
 
   Definition Nodes : list Name := [primary; backup].
