@@ -12,56 +12,202 @@ Section Counter.
     decide equality.
   Defined.
 
+  Definition name_serialize (n: Name) : list bool :=
+    match n with
+    | primary => true :: nil
+    | backup => false :: nil
+    end.
+
+  Definition name_deserialize (bin: list bool) : option (Name * list bool) :=
+    match bin with
+    | nil => None
+    | h :: t =>
+      match h with
+      | true => Some(primary, t)
+      | false => Some(backup, t)
+      end
+    end.
+
+  Lemma name_serialize_reversible: forall (n: Name) (bin: list bool),
+      name_deserialize ((name_serialize n) ++ bin) = Some (n, bin).
+  Proof.
+    unfold name_deserialize, name_serialize.
+    intros.
+    destruct n; reflexivity.
+  Qed.
+
+  Instance Name_Serializer: Serializer Name :=
+    {
+      serialize := name_serialize;
+      deserialize := name_deserialize;
+      Serialize_reversible := name_serialize_reversible
+    }.
+
+  Print Name_eq_dec.
+
+  Definition Name_bits_eq_dec : forall xBits yBits: list bool, {xBits = yBits} + {xBits <> yBits}.
+    refine (fun (xBits yBits: list bool) =>
+              match (deserialize xBits) with
+              | None => (right _ _)
+              | Some (x, rest) =>
+                match (deserialize yBits) with
+                | None => (right _ _)
+                | Some (y, rest) =>
+                  if (Name_eq_dec x y) then
+                    (left _ _)
+                  else
+                    (right _ _)
+                end
+              end).
+
+    (* This is where the issue is *)
+
+
+  Definition Name_bits_eq_dec (xBits yBits: list bool): forall xBits yBits: list bool, {xBits = yBits} + {xBits <> yBits} :=
+
   Inductive Msg := inc | ack.
   Definition Msg_eq_dec : forall x y : Msg, {x = y} + {x <> y}.
     decide equality.
   Defined.
+
+  Definition msg_serialize (m: Msg) : list bool :=
+    match m with
+    | inc => true :: nil
+    | ack => false :: nil
+    end.
+
+  Definition msg_deserialize (bin: list bool) : option (Msg * list bool) :=
+    match bin with
+    | nil => None
+    | h :: t =>
+      match h with
+      | true => Some(inc, t)
+      | false => Some(ack, t)
+      end
+    end.
+
+  Lemma msg_serialize_reversible: forall (m: Msg) (bin: list bool),
+      msg_deserialize ((msg_serialize m) ++ bin) = Some (m, bin).
+  Proof.
+    unfold msg_deserialize, msg_serialize.
+    intros.
+    destruct m; reflexivity.
+  Qed.
+
+  Instance Msg_Serializer: Serializer Msg :=
+    {
+      serialize := msg_serialize;
+      deserialize := msg_deserialize;
+      Serialize_reversible := msg_serialize_reversible
+    }.
 
   Inductive Input := request_inc.
   Definition Input_eq_dec : forall x y : Input, {x = y} + {x <> y}.
     destruct x,y. auto.
   Defined.
 
+  Definition input_serialize (i: Input) : list bool :=
+    nil.
+
+  Definition input_deserialize (bin: list bool) : option (Input * list bool) :=
+    Some(request_inc, bin).
+
+  Lemma input_serialize_reversible: forall (i: Input) (bin: list bool),
+      input_deserialize ((input_serialize i) ++ bin) = Some (i, bin).
+  Proof.
+    unfold input_deserialize, input_serialize.
+    intros; simpl.
+    destruct i; auto.
+  Qed.
+
+  Instance Input_Serializer: Serializer Input :=
+    {
+      serialize := input_serialize;
+      deserialize := input_deserialize;
+      Serialize_reversible := input_serialize_reversible;
+    }.
+
   Inductive Output := inc_executed.
   Definition Output_eq_dec : forall x y : Output, {x = y} + {x <> y}.
     destruct x,y. auto.
   Defined.
 
+  Definition output_serialize (o: Output) : list bool :=
+    nil.
+
+  Definition output_deserialize (bin: list bool) : option (Output * list bool) :=
+    Some(inc_executed, bin).
+
+  Lemma output_serialize_reversible: forall (o: Output) (bin: list bool),
+      output_deserialize ((output_serialize o) ++ bin) = Some (o, bin).
+  Proof.
+    unfold output_deserialize, output_serialize.
+    intros; simpl.
+    destruct o; auto.
+  Qed.
+
+  Instance Output_Serializer: Serializer Output :=
+    {
+      serialize := output_serialize;
+      deserialize := output_deserialize;
+      Serialize_reversible := output_serialize_reversible;
+    }.
+
   Definition Data := nat.
 
   Definition init_Data := 0.
 
-  Definition Handler (S : Type) := GenHandler (Name * Msg) S Output unit.
+  Definition Handler (S : Type) := GenHandler (list bool * list bool) S Output unit.
 
-  Definition PrimaryNetHandler (m : Msg) : Handler Data :=
-    match m with
-    | ack => write_output inc_executed
-    | _ => nop
+  Definition PrimaryNetHandler (mBits : list bool) : Handler Data :=
+    match (deserialize mBits) with
+    | None => nop
+    | Some (m, rest) =>
+      match m with
+      | ack => write_output inc_executed
+      | _ => nop
+      end
     end.
 
-  Definition PrimaryInputHandler (i : Input) : Handler Data :=
-    match i with
-    | request_inc => modify S ;; send (backup, inc)
+  Definition PrimaryInputHandler (iBits : list bool) : Handler Data :=
+    match (deserialize iBits) with
+    | None => nop
+    | Some (i, rest) =>
+      match i with
+      | request_inc => modify S ;; send ((serialize backup), (serialize inc))
+      end
     end.
 
-  Definition BackupNetHandler (m : Msg) : Handler Data :=
-    match m with
-    | inc => modify S ;; send (primary, ack)
-    | _ => nop
+  Definition BackupNetHandler (mBits : list bool) : Handler Data :=
+    match (deserialize mBits) with
+    | None => nop
+    | Some (m, rest) =>
+      match m with
+      | inc => modify S ;; send ((serialize primary), (serialize ack))
+      | _ => nop
+      end
     end.
 
-  Definition BackupInputHandler (i : Input) : Handler Data := nop.
+  Definition BackupInputHandler (iBits : list bool) : Handler Data := nop.
 
-  Definition NetHandler (me : Name) (m : Msg) : Handler Data :=
-    match me with
-    | primary => PrimaryNetHandler m
-    | backup => BackupNetHandler m
+  Definition NetHandler (meBits : list bool) (mBits : list bool) : Handler Data :=
+    match (deserialize meBits) with
+    | None => nop
+    | Some (me, rest) =>
+      match me with
+      | primary => PrimaryNetHandler mBits
+      | backup => BackupNetHandler mBits
+      end
     end.
 
-  Definition InputHandler (me : Name) (i : Input) : Handler Data :=
-    match me with
-    | primary => PrimaryInputHandler i
-    | backup => BackupInputHandler i
+  Definition InputHandler (meBits : list bool) (iBits : list bool) : Handler Data :=
+    match (deserialize meBits) with
+    | None => nop
+    | Some (me, rest) =>
+      match me with
+      | primary => PrimaryInputHandler iBits
+      | backup => BackupInputHandler iBits
+      end
     end.
 
   Instance Counter_BaseParams : BaseParams :=
@@ -83,16 +229,17 @@ Section Counter.
     repeat constructor; simpl; intuition discriminate.
   Qed.
 
+
   Instance Counter_MultiParams : MultiParams Counter_BaseParams :=
     {
-      name := Name;
+      name := list bool;
       name_eq_dec := Name_eq_dec;
-      msg := Msg;
+      msg := list bool;
       msg_eq_dec := Msg_eq_dec;
       nodes := Nodes;
       all_names_nodes := all_Names_Nodes;
       no_dup_nodes := NoDup_Nodes;
-      init_handlers := fun _ => init_Data;
+      init_handlers := fun _ => serialize init_Data;
       net_handlers := fun dst src msg s =>
                         runGenHandler_ignore s (NetHandler dst msg);
       input_handlers := fun nm i s =>
