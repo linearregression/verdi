@@ -43,28 +43,6 @@ Section Counter.
       Serialize_reversible := name_serialize_reversible
     }.
 
-  Print Name_eq_dec.
-
-  Definition Name_bits_eq_dec : forall xBits yBits: list bool, {xBits = yBits} + {xBits <> yBits}.
-    refine (fun (xBits yBits: list bool) =>
-              match (deserialize xBits) with
-              | None => (right _ _)
-              | Some (x, rest) =>
-                match (deserialize yBits) with
-                | None => (right _ _)
-                | Some (y, rest) =>
-                  if (Name_eq_dec x y) then
-                    (left _ _)
-                  else
-                    (right _ _)
-                end
-              end).
-
-    (* This is where the issue is *)
-
-
-  Definition Name_bits_eq_dec (xBits yBits: list bool): forall xBits yBits: list bool, {xBits = yBits} + {xBits <> yBits} :=
-
   Inductive Msg := inc | ack.
   Definition Msg_eq_dec : forall x y : Msg, {x = y} + {x <> y}.
     decide equality.
@@ -229,13 +207,12 @@ Section Counter.
     repeat constructor; simpl; intuition discriminate.
   Qed.
 
-
   Instance Counter_MultiParams : MultiParams Counter_BaseParams :=
     {
       name := list bool;
-      name_eq_dec := Name_eq_dec;
+      name_eq_dec := List_eq_dec;
       msg := list bool;
-      msg_eq_dec := Msg_eq_dec;
+      msg_eq_dec := List_eq_dec;
       nodes := Nodes;
       all_names_nodes := all_Names_Nodes;
       no_dup_nodes := NoDup_Nodes;
